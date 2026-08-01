@@ -44,14 +44,6 @@
         <input v-model="form.enabled_providers" class="di-input" placeholder="groq,gemini,cerebras,openrouter,mistral,claude" />
       </div>
 
-      <div class="di-card">
-        <h3>Branding</h3>
-        <label class="di-label">Platform name</label>
-        <input v-model="form.platform_name" class="di-input" />
-        <label class="di-label" style="margin-top:10px">Support email</label>
-        <input v-model="form.support_email" class="di-input" />
-      </div>
-
       <div class="di-modal-actions">
         <button class="di-btn primary" :disabled="store.saving" @click="onSave">
           {{ store.saving ? 'Saving…' : 'Save Settings' }}
