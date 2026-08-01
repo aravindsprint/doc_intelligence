@@ -3,8 +3,9 @@ import vue from '@vitejs/plugin-vue'
 import { VitePWA } from 'vite-plugin-pwa'
 import path from 'path'
 
-// Set this to your bench site's URL before running `npm run dev`.
-const DEV_BACKEND = process.env.DI_DEV_BACKEND || 'https://erp.pranera.in'
+// Set this to your bench site's URL before running `npm run dev`
+// (or pass DI_DEV_BACKEND=https://your-site.example as an env var).
+const DEV_BACKEND = process.env.DI_DEV_BACKEND || 'http://localhost:8000'
 
 export default defineConfig(({ command }) => ({
   base: command === 'serve' ? '/' : '/assets/doc_intelligence/doc_intelligence_app/',

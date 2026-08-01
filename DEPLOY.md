@@ -1,7 +1,7 @@
 # Deploying the Doc Intelligence SPA
 
 This package converts `doc_intelligence` from Desk-Pages-only to a classic
-Frappe custom app + decoupled Vue 3 SPA (same pattern as `pranera_knit`).
+Frappe custom app + decoupled Vue 3 SPA.
 
 ## What changed
 
@@ -25,15 +25,14 @@ Frappe custom app + decoupled Vue 3 SPA (same pattern as `pranera_knit`).
   the stale duplicate is gone.
 
 **New SPA layer:**
-- `frontend/` — Vue 3 + Vite + Pinia + Vue Router + Dexie, same stack and
-  build config pattern as `pranera_knit/frontend/`.
+- `frontend/` — Vue 3 + Vite + Pinia + Vue Router + Dexie, built and served as
+  a decoupled single-page app.
 - `doc_intelligence/www/doc-intelligence.html` + `doc_intelligence.py` —
   serves the SPA at `/doc-intelligence`, guards guests, injects the CSRF
-  token (mirrors `pranera_knit/www/knit-app.html` + `knit_app.py`).
+  token.
 - Two new whitelisted endpoints in `api/__init__.py`: `get_csrf_token` and
-  `get_session_info` (roles, System Manager flag) —
-  the SPA calls these on boot, same role `knit_get_csrf` played for
-  `pranera_knit`.
+  `get_session_info` (roles, System Manager flag) — the SPA calls these on
+  boot.
 - `hooks.py`: added the `/doc-intelligence/<path:app_path>` website route
   rule, restored the `fixtures` export (Workspace/Report/Page), pointed
   `add_to_apps_screen` at the new route.
@@ -88,7 +87,7 @@ bench restart
 
 ## 4. Clear the stale service worker (once, before testing)
 
-Same PWA caveat as `pranera_knit`: a service worker installed *before* this
+This app is a PWA with a service worker — one installed *before* this
 deploy will keep serving old cached assets.
 
 1. Open the site in Chrome → DevTools → **Application** → **Service

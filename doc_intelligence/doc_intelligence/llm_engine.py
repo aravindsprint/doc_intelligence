@@ -72,7 +72,7 @@ def _call_openai_compat(provider, prompt, system, max_tokens, settings):
     model = getattr(settings, provider["model_field"], None) or provider["default_model"]
     extra_headers = {}
     if provider["id"] == "openrouter":
-        extra_headers = {"HTTP-Referer": "https://doc-intelligence.pranera.in", "X-Title": "Doc Intelligence"}
+        extra_headers = {"HTTP-Referer": "https://github.com/aravindsprint/doc_intelligence", "X-Title": "Doc Intelligence"}
     try:
         client = OpenAI(api_key=key, base_url=provider["base_url"], default_headers=extra_headers, timeout=90.0, max_retries=1)
         resp = client.chat.completions.create(
@@ -265,7 +265,7 @@ def _vision_call_openai_compat(provider, image_b64, mime, max_tokens, settings):
     model = getattr(settings, provider["model_field"], None) or provider["default_model"]
     extra_headers = {}
     if provider["id"] == "openrouter":
-        extra_headers = {"HTTP-Referer": "https://doc-intelligence.pranera.in", "X-Title": "Doc Intelligence"}
+        extra_headers = {"HTTP-Referer": "https://github.com/aravindsprint/doc_intelligence", "X-Title": "Doc Intelligence"}
     try:
         client = OpenAI(api_key=key, base_url=provider["base_url"], default_headers=extra_headers, timeout=90.0, max_retries=1)
         resp = client.chat.completions.create(

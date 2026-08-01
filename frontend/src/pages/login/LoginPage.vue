@@ -63,9 +63,8 @@ async function onSubmit() {
   try {
     await auth.login(email.value, password.value)
     // Full navigation (not router.push) so main.js re-runs against the now-
-    // valid session cookie — matches pranera_knit's login flow, since
-    // reusing the SPA's in-memory state right after login has proven
-    // unreliable while a hard reload works every time.
+    // valid session cookie — reusing the SPA's in-memory state right after
+    // login has proven unreliable while a hard reload works every time.
     window.location.href = '/doc-intelligence/home'
   } catch (err) {
     error.value = err.message || 'Login failed'

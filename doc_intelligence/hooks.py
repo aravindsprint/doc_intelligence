@@ -2,9 +2,9 @@ from . import __version__ as app_version
 
 app_name        = "doc_intelligence"
 app_title       = "Doc Intelligence"
-app_publisher   = "Pranera"
+app_publisher   = "Aravind Govindaraj"
 app_description = "AI-powered document analysis for Frappe/ERPNext"
-app_email       = "admin@pranera.in"
+app_email       = "aravindsprint@gmail.com"
 app_license     = "MIT"
 app_version     = "1.0.0"
 

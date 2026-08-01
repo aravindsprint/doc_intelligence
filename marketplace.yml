@@ -12,7 +12,7 @@ description: |
   directly from an uploaded document, with independent financial validation,
   fuzzy party matching, and duplicate-invoice detection built in. Bring your
   own API keys; your documents and keys never leave your own server.
-author: Pranera
+author: Aravind Govindaraj
 source_link: https://github.com/yourname/doc_intelligence
 tags:
   - AI
@@ -28,4 +28,4 @@ supported:
   - "14"
   - "15"
 support_link: https://github.com/yourname/doc_intelligence/issues
-support_email: admin@pranera.in
+support_email: aravindsprint@gmail.com

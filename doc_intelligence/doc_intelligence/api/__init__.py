@@ -997,8 +997,7 @@ def _create_item(name, uom="Nos", rate=0):
 # =====================================================================
 # SPA SESSION HELPERS
 #   Added for the decoupled Vue 3 frontend (frontend/) served via
-#   www/doc-intelligence.html — mirrors the pattern used by the
-#   pranera_knit app's own SPA (knit_get_csrf).
+#   www/doc-intelligence.html.
 # =====================================================================
 
 @frappe.whitelist(allow_guest=True)
