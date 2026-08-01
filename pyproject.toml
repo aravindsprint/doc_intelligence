@@ -15,4 +15,4 @@ dependencies = ["frappe"]
 name = "doc_intelligence"
 
 [tool.bench.frappe-dependencies]
-frappe = ">=14.0.0"
+frappe = ">=14.0.0,<16.0.0"
