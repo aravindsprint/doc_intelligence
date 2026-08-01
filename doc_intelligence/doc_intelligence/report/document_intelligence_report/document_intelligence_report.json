@@ -1,0 +1,33 @@
+{
+ "doctype": "Report",
+ "name": "Document Intelligence Report",
+ "report_name": "Document Intelligence Report",
+ "module": "Doc Intelligence",
+ "ref_doctype": "AI Document",
+ "report_type": "Script Report",
+ "is_standard": "Yes",
+ "filters": [
+  {
+   "fieldname": "from_date",
+   "label": "From Date",
+   "fieldtype": "Date"
+  },
+  {
+   "fieldname": "to_date",
+   "label": "To Date",
+   "fieldtype": "Date"
+  },
+  {
+   "fieldname": "document_type",
+   "label": "Document Type",
+   "fieldtype": "Select",
+   "options": "\\nEntities\\nTransactions"
+  },
+  {
+   "fieldname": "status",
+   "label": "Status",
+   "fieldtype": "Select",
+   "options": "\\nPending\\nProcessing\\nReady\\nFailed"
+  }
+ ]
+}

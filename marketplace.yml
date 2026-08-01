@@ -1,0 +1,31 @@
+title: Doc Intelligence
+tagline: Free, open-source AI document analysis and ERPNext automation
+description: |
+  Doc Intelligence brings multi-provider LLM document analysis and ERPNext record
+  automation into your Frappe desk — completely free and self-hosted. Upload a
+  PDF, DOCX, or photo and instantly receive structured summaries, entity
+  extraction, table parsing, and natural-language Q&A — powered by Groq, Gemini,
+  Cerebras, OpenRouter, Mistral, DeepSeek, OpenAI, or Claude with automatic
+  fallback between providers. Go further and create draft Item/Supplier/
+  Customer/Employee/Address records or full transactional documents
+  (Quotation/Sales Order/Purchase Order/Material Request/Purchase Invoice)
+  directly from an uploaded document, with independent financial validation,
+  fuzzy party matching, and duplicate-invoice detection built in. Bring your
+  own API keys; your documents and keys never leave your own server.
+author: Pranera
+source_link: https://github.com/yourname/doc_intelligence
+tags:
+  - AI
+  - Document Management
+  - Productivity
+  - LLM
+  - Automation
+  - Free
+  - Open Source
+screenshots: []
+min_frappe_version: "14.0.0"
+supported:
+  - "14"
+  - "15"
+support_link: https://github.com/yourname/doc_intelligence/issues
+support_email: admin@pranera.in

@@ -1,0 +1,189 @@
+{
+ "doctype": "DocType",
+ "name": "Doc Intelligence Settings",
+ "module": "Doc Intelligence",
+ "issingle": 1,
+ "fields": [
+  {
+   "fieldname": "sb_routing",
+   "label": "LLM Provider Routing",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "enabled_providers",
+   "label": "Enabled Providers",
+   "fieldtype": "Data",
+   "default": "groq,gemini,cerebras,openrouter,mistral,claude",
+   "description": "Comma-separated priority order"
+  },
+  {
+   "fieldname": "sb_groq",
+   "label": "Groq",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "groq_api_key",
+   "label": "Groq API Key",
+   "fieldtype": "Password"
+  },
+  {
+   "fieldname": "groq_model",
+   "label": "Groq Model",
+   "fieldtype": "Select",
+   "options": "llama-3.3-70b-versatile\nllama-3.1-8b-instant\nmixtral-8x7b-32768",
+   "default": "llama-3.3-70b-versatile"
+  },
+  {
+   "fieldname": "sb_gemini",
+   "label": "Gemini",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "gemini_api_key",
+   "label": "Gemini API Key",
+   "fieldtype": "Password"
+  },
+  {
+   "fieldname": "gemini_model",
+   "label": "Gemini Model",
+   "fieldtype": "Select",
+   "options": "gemini-2.5-flash\ngemini-2.0-flash\ngemini-1.5-flash",
+   "default": "gemini-2.5-flash"
+  },
+  {
+   "fieldname": "sb_cerebras",
+   "label": "Cerebras",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "cerebras_api_key",
+   "label": "Cerebras API Key",
+   "fieldtype": "Password"
+  },
+  {
+   "fieldname": "cerebras_model",
+   "label": "Cerebras Model",
+   "fieldtype": "Select",
+   "options": "llama3.1-70b\nllama3.1-8b",
+   "default": "llama3.1-70b"
+  },
+  {
+   "fieldname": "sb_openrouter",
+   "label": "OpenRouter",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "openrouter_api_key",
+   "label": "OpenRouter API Key",
+   "fieldtype": "Password"
+  },
+  {
+   "fieldname": "openrouter_model",
+   "label": "OpenRouter Model",
+   "fieldtype": "Data",
+   "default": "meta-llama/llama-3.3-70b-instruct:free"
+  },
+  {
+   "fieldname": "sb_mistral",
+   "label": "Mistral",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "mistral_api_key",
+   "label": "Mistral API Key",
+   "fieldtype": "Password"
+  },
+  {
+   "fieldname": "mistral_model",
+   "label": "Mistral Model",
+   "fieldtype": "Select",
+   "options": "mistral-small-latest\nmistral-medium-latest\ncodestral-latest",
+   "default": "mistral-small-latest"
+  },
+  {
+   "fieldname": "sb_claude",
+   "label": "Claude",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "claude_api_key",
+   "label": "Claude API Key",
+   "fieldtype": "Password"
+  },
+  {
+   "fieldname": "claude_model",
+   "label": "Claude Model",
+   "fieldtype": "Select",
+   "options": "claude-haiku-4-5-20251001\nclaude-sonnet-4-6",
+   "default": "claude-haiku-4-5-20251001"
+  },
+  {
+   "fieldname": "sb_openai",
+   "label": "OpenAI (ChatGPT)",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "openai_api_key",
+   "label": "OpenAI API Key",
+   "fieldtype": "Password"
+  },
+  {
+   "fieldname": "openai_model",
+   "label": "OpenAI Model",
+   "fieldtype": "Select",
+   "options": "gpt-4o-mini\ngpt-4o\ngpt-4.1-mini",
+   "default": "gpt-4o-mini"
+  },
+  {
+   "fieldname": "sb_deepseek",
+   "label": "DeepSeek",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "deepseek_api_key",
+   "label": "DeepSeek API Key",
+   "fieldtype": "Password"
+  },
+  {
+   "fieldname": "deepseek_model",
+   "label": "DeepSeek Model",
+   "fieldtype": "Select",
+   "options": "deepseek-chat\ndeepseek-reasoner",
+   "default": "deepseek-chat"
+  },
+  {
+   "fieldname": "sb_saas",
+   "label": "Branding",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "platform_name",
+   "label": "Platform Name",
+   "fieldtype": "Data",
+   "default": "Doc Intelligence"
+  },
+  {
+   "fieldname": "support_email",
+   "label": "Support Email",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "sb_general",
+   "label": "General",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "max_tokens_per_request",
+   "label": "Max Tokens Per Request",
+   "fieldtype": "Int",
+   "default": 2000
+  }
+ ],
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1
+  }
+ ]
+}

@@ -1,0 +1,46 @@
+{
+ "doctype": "DocType",
+ "name": "DI Provider Log",
+ "module": "Doc Intelligence",
+ "autoname": "hash",
+ "track_changes": 0,
+ "fields": [
+  {
+   "fieldname": "provider",
+   "label": "Provider",
+   "fieldtype": "Data",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "timestamp",
+   "label": "Timestamp",
+   "fieldtype": "Datetime",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "success",
+   "label": "Success",
+   "fieldtype": "Check",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "tokens",
+   "label": "Tokens",
+   "fieldtype": "Int",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "error",
+   "label": "Error",
+   "fieldtype": "Small Text"
+  }
+ ],
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1
+  }
+ ]
+}

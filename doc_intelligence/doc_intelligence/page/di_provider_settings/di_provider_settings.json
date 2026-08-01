@@ -1,0 +1,13 @@
+{
+ "doctype": "Page",
+ "name": "di-provider-settings",
+ "page_name": "di-provider-settings",
+ "title": "LLM Provider Settings",
+ "module": "Doc Intelligence",
+ "system_page": 0,
+ "roles": [
+  {
+   "role": "System Manager"
+  }
+ ]
+}

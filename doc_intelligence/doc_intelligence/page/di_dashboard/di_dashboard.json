@@ -1,0 +1,13 @@
+{
+ "doctype": "Page",
+ "name": "di-dashboard",
+ "page_name": "di-dashboard",
+ "title": "Doc Intelligence Dashboard",
+ "module": "Doc Intelligence",
+ "system_page": 0,
+ "roles": [
+  {
+   "role": "All"
+  }
+ ]
+}

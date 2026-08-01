@@ -1,0 +1,24 @@
+<script>window.csrf_token="{{ csrf_token }}";</script>
+{%- raw -%}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+  <title>Doc Intelligence</title>
+  <meta name="theme-color" content="#1a2744"/>
+  <meta name="mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-title" content="Doc Intelligence"/>
+  <link rel="manifest" href="/assets/doc_intelligence/doc_intelligence_app/manifest.webmanifest"/>
+  <link rel="icon" href="/assets/doc_intelligence/doc_intelligence_app/icons/icon-192.png"/>
+  <link rel="apple-touch-icon" href="/assets/doc_intelligence/doc_intelligence_app/icons/icon-192.png"/>
+  <link rel="stylesheet" href="/assets/doc_intelligence/doc_intelligence_app/index.css"/>
+</head>
+<body>
+  <div id="app"></div>
+  <script type="module" src="/assets/doc_intelligence/doc_intelligence_app/index.js"></script>
+  <script id="vite-plugin-pwa:register-sw" src="/assets/doc_intelligence/doc_intelligence_app/registerSW.js"></script>
+</body>
+</html>
+{%- endraw -%}

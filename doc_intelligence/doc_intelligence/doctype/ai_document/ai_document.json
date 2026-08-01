@@ -1,0 +1,123 @@
+{
+ "doctype": "DocType",
+ "name": "AI Document",
+ "module": "Doc Intelligence",
+ "autoname": "hash",
+ "title_field": "title",
+ "search_fields": "title,document_type,status",
+ "fields": [
+  {
+   "fieldname": "title",
+   "label": "Title",
+   "fieldtype": "Data",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "file_attachment",
+   "label": "File Attachment",
+   "fieldtype": "Attach",
+   "reqd": 1
+  },
+  {
+   "fieldname": "document_type",
+   "label": "Document Type",
+   "fieldtype": "Select",
+   "options": "\nEntities\nTransactions",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "status",
+   "label": "Status",
+   "fieldtype": "Select",
+   "options": "Pending\nProcessing\nReady\nFailed",
+   "default": "Pending",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "processed_on",
+   "label": "Processed On",
+   "fieldtype": "Datetime",
+   "read_only": 1
+  },
+  {
+   "fieldname": "token_count",
+   "label": "Token Count",
+   "fieldtype": "Int",
+   "read_only": 1
+  },
+  {
+   "fieldname": "provider_used",
+   "label": "Provider Used",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sb_analysis",
+   "label": "Analysis",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "summary",
+   "label": "AI Summary",
+   "fieldtype": "Long Text",
+   "read_only": 1
+  },
+  {
+   "fieldname": "key_entities",
+   "label": "Key Entities / Parties",
+   "fieldtype": "Long Text",
+   "read_only": 1
+  },
+  {
+   "fieldname": "extracted_table",
+   "label": "Extracted Table Data",
+   "fieldtype": "Long Text",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sb_qa",
+   "label": "Q&A",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "user_question",
+   "label": "Your Question",
+   "fieldtype": "Small Text"
+  },
+  {
+   "fieldname": "ai_answer",
+   "label": "AI Answer",
+   "fieldtype": "Long Text",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sb_raw",
+   "label": "Raw Text",
+   "fieldtype": "Section Break",
+   "collapsible": 1
+  },
+  {
+   "fieldname": "raw_text",
+   "label": "Raw Text",
+   "fieldtype": "Long Text",
+   "read_only": 1
+  }
+ ],
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1
+  },
+  {
+   "role": "All",
+   "read": 1,
+   "write": 1,
+   "create": 1
+  }
+ ]
+}

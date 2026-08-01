@@ -1,0 +1,37 @@
+{
+  "name": "Doc Intelligence",
+  "short_name": "Doc Intel",
+  "description": "AI-powered document analysis for ERPNext",
+  "start_url": "/doc-intelligence",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#ffffff",
+  "theme_color": "#1a2744",
+  "icons": [
+    {
+      "src": "/assets/doc_intelligence/doc_intelligence_app/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/assets/doc_intelligence/doc_intelligence_app/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/assets/doc_intelligence/doc_intelligence_app/icons/icon-192-maskable.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/assets/doc_intelligence/doc_intelligence_app/icons/icon-512-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "categories": ["productivity", "business"]
+}

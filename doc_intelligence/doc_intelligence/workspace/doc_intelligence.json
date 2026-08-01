@@ -1,0 +1,78 @@
+{
+ "doctype": "Workspace",
+ "name": "Doc Intelligence",
+ "title": "Doc Intelligence",
+ "module": "Doc Intelligence",
+ "icon": "octicon octicon-file",
+ "color": "#1a2744",
+ "is_standard": 1,
+ "shortcuts": [
+  {
+   "label": "AI Document",
+   "type": "DocType",
+   "doc_view": "List",
+   "link_to": "AI Document"
+  },
+  {
+   "label": "New Document",
+   "type": "DocType",
+   "doc_view": "New",
+   "link_to": "AI Document"
+  },
+  {
+   "label": "LLM Provider Settings",
+   "type": "Page",
+   "link_to": "di-provider-settings",
+   "icon": "octicon octicon-zap",
+   "color": "#7C3FE4"
+  },
+  {
+   "label": "Settings",
+   "type": "DocType",
+   "doc_view": "Form",
+   "link_to": "Doc Intelligence Settings"
+  },
+  {
+   "label": "Document Intelligence Report",
+   "type": "Report",
+   "link_to": "Document Intelligence Report"
+  },
+  {
+   "label": "Dashboard",
+   "type": "Page",
+   "link_to": "di-dashboard"
+  }
+ ],
+ "cards": [
+  {
+   "label": "Documents",
+   "links": [
+    {
+     "label": "AI Document",
+     "type": "DocType",
+     "link_to": "AI Document"
+    },
+    {
+     "label": "Document Intelligence Report",
+     "type": "Report",
+     "link_to": "Document Intelligence Report"
+    }
+   ]
+  },
+  {
+   "label": "Configuration",
+   "links": [
+    {
+     "label": "Doc Intelligence Settings",
+     "type": "DocType",
+     "link_to": "Doc Intelligence Settings"
+    },
+    {
+     "label": "LLM Provider Settings",
+     "type": "Page",
+     "link_to": "di-provider-settings"
+    }
+   ]
+  }
+ ]
+}

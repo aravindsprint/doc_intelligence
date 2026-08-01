@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <rect width="100" height="100" rx="22" fill="#1a2744"/>
+
+  <!-- back page (depth / batch-processing cue) -->
+  <rect x="19" y="15" width="46" height="60" rx="5" fill="#ffffff" opacity="0.16"/>
+
+  <!-- front page with a folded top-right corner -->
+  <path d="M 33,23
+           L 62,23
+           L 74,35
+           L 74,77
+           Q 74,82 69,82
+           L 33,82
+           Q 28,82 28,77
+           L 28,28
+           Q 28,23 33,23
+           Z"
+        fill="#ffffff"/>
+
+  <!-- folded flap -->
+  <path d="M 62,23 L 74,35 L 62,35 Z" fill="#1a2744" opacity="0.14"/>
+  <path d="M 62,23 L 74,35" stroke="#1a2744" stroke-opacity="0.25" stroke-width="0.8" fill="none"/>
+
+  <!-- text lines -->
+  <rect x="36" y="45" width="28" height="3.2" rx="1.6" fill="#1a2744"/>
+  <rect x="36" y="54" width="28" height="3.2" rx="1.6" fill="#1a2744"/>
+  <rect x="36" y="63" width="18" height="3.2" rx="1.6" fill="#1a2744"/>
+
+  <!-- AI spark badge -->
+  <circle cx="73" cy="75" r="17" fill="#1a2744"/>
+  <circle cx="73" cy="75" r="14.5" fill="#2563eb"/>
+  <path d="M 73,67
+           Q 73.9,73 80.5,75
+           Q 73.9,77 73,83
+           Q 72.1,77 65.5,75
+           Q 72.1,73 73,67
+           Z" fill="#ffffff"/>
+  <path d="M 80,68
+           Q 80.5,69.4 82,70
+           Q 80.5,70.6 80,72
+           Q 79.5,70.6 78,70
+           Q 79.5,69.4 80,68
+           Z" fill="#ffffff" opacity="0.9"/>
+</svg>

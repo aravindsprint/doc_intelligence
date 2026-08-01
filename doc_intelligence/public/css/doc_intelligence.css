@@ -1,0 +1,94 @@
+/* Doc Intelligence — Global Styles */
+:root {
+  --di-navy: #1a2744;
+  --di-blue: #2563eb;
+  --di-green: #22c55e;
+  --di-orange: #f97316;
+  --di-red: #ef4444;
+}
+
+/* Extracted table from AI Document */
+.di-extracted-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 12px 0;
+  font-size: 13px;
+}
+.di-extracted-table thead tr {
+  background: var(--di-navy);
+  color: #fff;
+}
+.di-extracted-table thead th {
+  padding: 9px 12px;
+  text-align: left;
+  font-weight: 600;
+}
+.di-extracted-table tbody tr:nth-child(even) {
+  background: #f1f5f9;
+}
+.di-extracted-table tbody tr:hover {
+  background: #dbeafe;
+}
+.di-extracted-table tbody td {
+  padding: 8px 12px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+/* Token quota progress bar */
+.di-quota-bar-wrap {
+  background: #e5e7eb;
+  border-radius: 6px;
+  height: 10px;
+  margin: 6px 0;
+}
+.di-quota-bar-fill {
+  height: 100%;
+  border-radius: 6px;
+  background: var(--di-green);
+  transition: width .4s, background .3s;
+}
+.di-quota-bar-fill.warn  { background: var(--di-orange); }
+.di-quota-bar-fill.danger { background: var(--di-red); }
+
+/* Status pills */
+.di-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border-radius: 20px;
+  padding: 3px 10px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+/* Activity log table */
+.di-log-table th, .di-log-table td {
+  padding: 7px 10px;
+  font-size: 12px;
+}
+
+/* Provider health cards */
+.di-health-card {
+  background: var(--card-bg, #fff);
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: 8px;
+  padding: 12px;
+}
+
+/* Form field overrides */
+[data-fieldname="ai_answer"] .control-value,
+[data-fieldname="summary"] .control-value {
+  background: var(--subtle-fg, #f8fafc);
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: 6px;
+  padding: 10px 12px;
+  white-space: pre-wrap;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+/* Section header accents */
+.section-head {
+  border-bottom: 2px solid var(--di-blue);
+  padding-bottom: 4px;
+}
