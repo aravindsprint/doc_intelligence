@@ -328,11 +328,11 @@ def vision_extract_text(image_path, tenant_name=None, max_tokens=4000):
             "API key in Doc Intelligence Settings to process images."
         )
 
-    # nosemgrep: frappe-security-file-traversal -- image_path is not raw
-    # user input; it's constructed by extract_text() via os.path.basename()
-    # joined against the site's own private/public files directory, which
-    # already strips any path-traversal components before this is called.
-    with open(image_path, "rb") as f:
+    # image_path is not raw user input; it's constructed by extract_text()
+    # via os.path.basename() joined against the site's own private/public
+    # files directory, which already strips any path-traversal components
+    # before this is called.
+    with open(image_path, "rb") as f:  # nosemgrep: frappe-security-file-traversal
         image_b64 = base64.b64encode(f.read()).decode("utf-8")
     mime = _mime_for(image_path)
 
