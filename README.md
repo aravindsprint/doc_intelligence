@@ -58,7 +58,7 @@ bench restart
 1. Go to `/doc-intelligence/provider-settings` (System Manager only)
 2. Expand a provider and paste in an API key — Groq, Gemini, Cerebras, Mistral, and DeepSeek all have usable free tiers
 3. Click **Save Settings** → **Test All Providers**
-4. Add that provider's id to **Enabled Providers**, e.g. `groq,gemini,cerebras`
+4. Add that provider's id to **Enabled Providers**, e.g. `groq,gemini,cerebras,claude`
 5. Go to `/doc-intelligence/home` → **Upload Document**
 6. Wait for status = **Ready**, then try Ask a Question, Compare, and Create ERPNext Record
 
