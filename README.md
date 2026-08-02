@@ -43,7 +43,7 @@ See `DEPLOY.md` for build/deploy steps.
 ## Installation
 
 ```bash
-bench get-app doc_intelligence https://github.com/yourname/doc_intelligence
+bench get-app doc_intelligence https://github.com/aravindsprint/doc_intelligence
 bench --site yoursite.localhost install-app doc_intelligence
 bench --site yoursite.localhost migrate
 pip install openai anthropic pypdf python-docx --break-system-packages
