@@ -374,7 +374,10 @@ def create_purchase_invoice_doc(supplier, bill_no, bill_date, posting_date, due_
         "custom_pending_remarks": remarks or "Created via Doc Intelligence",
     })
     doc.insert(ignore_mandatory=True)
-    frappe.db.commit()
+    # Commits immediately after insert() so the newly-created draft record is
+    # durably saved before the API response returns and the frontend navigates
+    # straight to it.
+    frappe.db.commit()  # nosemgrep: frappe-manual-commit
     return {"name": doc.name, "doctype": "Purchase Invoice"}
 # =====================================================================
 # ENTITY CREATE ACTIONS  —  append to:
@@ -665,7 +668,10 @@ def create_entity_doc(entity_type, values):
         frappe.throw(f"Unsupported entity type: {entity_type}")
 
     doc.insert(ignore_mandatory=True)
-    frappe.db.commit()
+    # Commits immediately after insert() so the newly-created draft record is
+    # durably saved before the API response returns and the frontend navigates
+    # straight to it.
+    frappe.db.commit()  # nosemgrep: frappe-manual-commit
     return {"name": doc.name, "doctype": entity_type}
 
 
@@ -952,7 +958,10 @@ def create_transaction_doc(txn_type, header, items, confirm_duplicate=0):
 
     doc = frappe.get_doc(base)
     doc.insert(ignore_mandatory=True)   # DRAFT — no submit
-    frappe.db.commit()
+    # Commits immediately after insert() so the newly-created draft record is
+    # durably saved before the API response returns and the frontend navigates
+    # straight to it.
+    frappe.db.commit()  # nosemgrep: frappe-manual-commit
     return {"name": doc.name, "doctype": txn_type}
 
 

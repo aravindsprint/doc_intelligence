@@ -114,7 +114,7 @@
    "delete": 1
   },
   {
-   "role": "All",
+   "role": "Doc Intelligence User",
    "read": 1,
    "write": 1,
    "create": 1

@@ -19,21 +19,22 @@ def execute(filters=None):
 
     where = "WHERE " + " AND ".join(conditions) if conditions else ""
 
-    data = frappe.db.sql(f"""
-        SELECT name, title, document_type, status, processed_on,
-               token_count, owner, creation
-        FROM `tabAI Document`
-        {where}
-        ORDER BY creation DESC
-    """, filters, as_dict=True)
+    data = frappe.db.sql(
+        "SELECT name, title, document_type, status, processed_on, "
+        "token_count, owner, creation "
+        "FROM `tabAI Document` " + where + " "
+        "ORDER BY creation DESC",
+        filters, as_dict=True
+    )
 
-    agg = frappe.db.sql(f"""
-        SELECT COUNT(*) as total,
-               SUM(CASE WHEN status='Ready' THEN 1 ELSE 0 END) as ready_count,
-               SUM(CASE WHEN status='Failed' THEN 1 ELSE 0 END) as failed_count,
-               SUM(token_count) as total_tokens
-        FROM `tabAI Document` {where}
-    """, filters, as_dict=True)[0]
+    agg = frappe.db.sql(
+        "SELECT COUNT(*) as total, "
+        "SUM(CASE WHEN status='Ready' THEN 1 ELSE 0 END) as ready_count, "
+        "SUM(CASE WHEN status='Failed' THEN 1 ELSE 0 END) as failed_count, "
+        "SUM(token_count) as total_tokens "
+        "FROM `tabAI Document` " + where,
+        filters, as_dict=True
+    )[0]
 
     columns = [
         {"label":"Document","fieldname":"name","fieldtype":"Link","options":"AI Document","width":160},

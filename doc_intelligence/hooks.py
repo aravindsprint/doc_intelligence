@@ -25,6 +25,7 @@ fixtures = [
     {"doctype": "Workspace", "filters": [["module", "=", "Doc Intelligence"]]},
     {"doctype": "Report",    "filters": [["module", "=", "Doc Intelligence"]]},
     {"doctype": "Page",      "filters": [["module", "=", "Doc Intelligence"]]},
+    {"doctype": "Role",      "filters": [["name", "=", "Doc Intelligence User"]]},
 ]
 
 app_include_css = "/assets/doc_intelligence/css/doc_intelligence.css"

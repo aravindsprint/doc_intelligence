@@ -49,7 +49,7 @@ def fail_stuck_processing_documents():
             "AI Document stuck-processing cleanup",
         )
     if stuck:
-        frappe.db.commit()
+        frappe.db.commit()  # nosemgrep: frappe-manual-commit -- scheduled job, no request-level auto-commit to rely on
 
 
 def _as_text(value):
@@ -74,7 +74,7 @@ def process_document(doc_name):
     try:
         doc.status = "Processing"
         doc.save(ignore_permissions=True)
-        frappe.db.commit()
+        frappe.db.commit()  # nosemgrep: frappe-manual-commit -- must be visible before the long-running LLM call, in case the job is killed mid-flight
 
         raw_text = extract_text(doc.file_attachment)
         doc.raw_text = raw_text
@@ -95,7 +95,7 @@ def process_document(doc_name):
         doc.status = "Ready"
         doc.processed_on = frappe.utils.now_datetime()
         doc.save(ignore_permissions=True)
-        frappe.db.commit()
+        frappe.db.commit()  # nosemgrep: frappe-manual-commit -- background job, commits its own result explicitly
 
     except Exception:
         frappe.log_error(frappe.get_traceback(), f"AI Document processing failed: {doc_name}")
@@ -108,11 +108,11 @@ def process_document(doc_name):
             doc.reload()
             doc.status = "Failed"
             doc.save(ignore_permissions=True)
-            frappe.db.commit()
+            frappe.db.commit()  # nosemgrep: frappe-manual-commit -- failure path must land even if the rest of the job never committed
         except Exception:
             frappe.log_error(frappe.get_traceback(), f"AI Document failure-handling itself failed: {doc_name}")
             frappe.db.set_value("AI Document", doc_name, "status", "Failed", update_modified=True)
-            frappe.db.commit()
+            frappe.db.commit()  # nosemgrep: frappe-manual-commit -- last-resort fallback, must guarantee the status change lands
 
 
 def extract_text(file_url):
