@@ -8,12 +8,14 @@ def check_app_permission():
 
 
 @frappe.whitelist()
-def list_documents(status=None, document_type=None, limit=20, offset=0):
+def list_documents(status=None, document_type=None, search=None, limit=20, offset=0):
     filters = {}
     if status:
         filters["status"] = status
     if document_type:
         filters["document_type"] = document_type
+    if search:
+        filters["title"] = ["like", f"%{search}%"]
     docs = frappe.get_list(
         "AI Document", filters=filters,
         fields=["name","title","document_type","status","processed_on","token_count","provider_used","creation","owner"],

@@ -10,11 +10,11 @@ export const useDocumentsStore = defineStore('documents', () => {
   const loading = ref(false)
   const error = ref('')
 
-  async function fetchDocuments({ status = null, document_type = null, limit = 20, offset = 0 } = {}) {
+  async function fetchDocuments({ status = null, document_type = null, search = null, limit = 20, offset = 0 } = {}) {
     loading.value = true
     error.value = ''
     try {
-      const res = await api.listDocuments({ status, document_type, limit, offset })
+      const res = await api.listDocuments({ status, document_type, search, limit, offset })
       documents.value = res.data || []
       total.value = res.total || 0
       // Cache for offline viewing (best-effort — never blocks the UI on failure)

@@ -6,6 +6,13 @@
     </div>
 
     <div class="di-filters">
+      <input
+        v-model="searchQuery"
+        type="text"
+        class="di-input di-search-input"
+        placeholder="Search by title…"
+        @input="onSearchInput"
+      />
       <select v-model="statusFilter" class="di-select" @change="reload">
         <option value="">All statuses</option>
         <option v-for="s in statuses" :key="s" :value="s">{{ s }}</option>
@@ -76,10 +83,17 @@ import UploadDialog from './UploadDialog.vue'
 const store = useDocumentsStore()
 const statusFilter = ref('')
 const typeFilter = ref('')
+const searchQuery = ref('')
 const showUpload = ref(false)
 
 const statuses = ['Pending', 'Processing', 'Ready', 'Failed']
 const types = ['Entities', 'Transactions']
+
+let searchDebounceTimer = null
+function onSearchInput() {
+  clearTimeout(searchDebounceTimer)
+  searchDebounceTimer = setTimeout(reload, 350)
+}
 
 const selectedIds = ref([])
 const deleting = ref(false)
@@ -124,7 +138,11 @@ function confirmBulkDelete() {
 }
 
 function reload() {
-  store.fetchDocuments({ status: statusFilter.value || null, document_type: typeFilter.value || null })
+  store.fetchDocuments({
+    status: statusFilter.value || null,
+    document_type: typeFilter.value || null,
+    search: searchQuery.value.trim() || null,
+  })
 }
 
 function onUploaded() {
@@ -138,7 +156,8 @@ onMounted(reload)
 <style scoped>
 .di-page-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
 .di-page-head h1 { font-size: 22px; margin: 0; color: var(--di-navy); }
-.di-filters { display: flex; gap: 10px; margin-bottom: 18px; max-width: 420px; }
+.di-filters { display: flex; gap: 10px; margin-bottom: 18px; max-width: 640px; }
+.di-search-input { flex: 1; min-width: 160px; }
 
 .di-selection-bar {
   display: flex; align-items: center; justify-content: space-between;
