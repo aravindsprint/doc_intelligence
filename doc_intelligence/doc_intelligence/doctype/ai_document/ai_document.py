@@ -16,6 +16,15 @@ class AIDocument(Document):
             )
 
     def on_update(self):
+        # after_insert already enqueues processing for a brand-new document.
+        # Frappe fires on_update as part of the same insert() call, and by
+        # that point is_new() no longer reliably says "this is still the
+        # initial insert" -- but self.flags.in_insert does. Without this
+        # guard, a fresh upload enqueues TWO workers for the same doc_name,
+        # which race on doc.save() and can stomp a successful result with
+        # a stale-timestamp "Failed" status.
+        if self.flags.in_insert:
+            return
         if self.status == "Pending" and self.file_attachment and not self.is_new():
             frappe.enqueue(
                 "doc_intelligence.doc_intelligence.doctype.ai_document.ai_document.process_document",
