@@ -197,6 +197,12 @@ export const extractTransaction = (doc_name, txn_type) =>
 export const createTransactionDoc = (txn_type, header, items, confirm_duplicate = 0) =>
   call(`${APP}.create_transaction_doc`, { txn_type, header, items, confirm_duplicate }).then(r => r.message)
 
+// ── Ask ERPNext (copilot.py) ───────────────────────────────────────────────
+export const copilotDemoPrompts  = () => call(`${APP}.copilot_demo_prompts`).then(r => r.message)
+export const copilotAsk          = (question) => call(`${APP}.copilot_ask`, { question }).then(r => r.message)
+export const copilotConfirmCreate = (doctype, values) =>
+  call(`${APP}.copilot_confirm_create`, { doctype, values }).then(r => r.message)
+
 // ── Link field search (Supplier/Customer/etc autocomplete) ────────────────
 export async function searchLink(doctype, txt = '', filters = null) {
   const data = await call('frappe.desk.search.search_link', {

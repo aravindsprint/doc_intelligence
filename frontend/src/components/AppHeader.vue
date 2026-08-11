@@ -9,6 +9,7 @@
       <nav class="di-nav">
         <router-link to="/doc-intelligence/home">Documents</router-link>
         <router-link to="/doc-intelligence/dashboard">Dashboard</router-link>
+        <router-link to="/doc-intelligence/ask">Ask ERPNext</router-link>
         <router-link v-if="auth.isSystemManager" to="/doc-intelligence/provider-settings">Providers</router-link>
         <router-link to="/doc-intelligence/about">About</router-link>
       </nav>

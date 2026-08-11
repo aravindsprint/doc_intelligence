@@ -17,6 +17,7 @@ const routes = [
 
   // ── Online-only (lazy) ──
   { path: '/doc-intelligence/dashboard', component: () => import('@/pages/dashboard/DashboardPage.vue') },
+  { path: '/doc-intelligence/ask', component: () => import('@/pages/ask/AskPage.vue') },
   { path: '/doc-intelligence/about', component: () => import('@/pages/about/AboutPage.vue') },
   {
     path: '/doc-intelligence/provider-settings',
