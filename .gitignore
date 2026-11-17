@@ -7,3 +7,6 @@ frontend/node_modules/
 frontend/dist/
 *.log
 .env
+node_modules/
+/yarn.lock
+doc_intelligence/public/node_modules
