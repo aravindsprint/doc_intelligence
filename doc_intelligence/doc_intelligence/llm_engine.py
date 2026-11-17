@@ -13,7 +13,7 @@ def _strip_json_fences(text):
     return re.sub(r"```json\s*|\s*```", "", text or "").strip()
 
 PROVIDERS = [
-    {"id": "groq",       "base_url": "https://api.groq.com/openai/v1",                          "default_model": "llama-3.3-70b-versatile",                   "key_field": "groq_api_key",       "model_field": "groq_model",       "openai_compat": True},
+    {"id": "groq",       "base_url": "https://api.groq.com/openai/v1",                          "default_model": "openai/gpt-oss-120b",                       "key_field": "groq_api_key",       "model_field": "groq_model",       "openai_compat": True},
     {"id": "gemini",     "base_url": "https://generativelanguage.googleapis.com/v1beta/openai",  "default_model": "gemini-2.0-flash",                          "key_field": "gemini_api_key",     "model_field": "gemini_model",     "openai_compat": True},
     {"id": "cerebras",   "base_url": "https://api.cerebras.ai/v1",                               "default_model": "llama3.1-70b",                              "key_field": "cerebras_api_key",   "model_field": "cerebras_model",   "openai_compat": True},
     {"id": "openrouter", "base_url": "https://openrouter.ai/api/v1",                             "default_model": "meta-llama/llama-3.3-70b-instruct:free",    "key_field": "openrouter_api_key", "model_field": "openrouter_model", "openai_compat": True},

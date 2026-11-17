@@ -92,7 +92,7 @@ const openProvider = ref(null)
 const form = ref({})
 
 const providers = [
-  { id: 'groq', label: 'Groq', keyField: 'groq_api_key', modelField: 'groq_model', defaultModel: 'llama-3.3-70b-versatile' },
+  { id: 'groq', label: 'Groq', keyField: 'groq_api_key', modelField: 'groq_model', defaultModel: 'openai/gpt-oss-120b' },
   { id: 'gemini', label: 'Gemini', keyField: 'gemini_api_key', modelField: 'gemini_model', defaultModel: 'gemini-2.5-flash' },
   { id: 'cerebras', label: 'Cerebras', keyField: 'cerebras_api_key', modelField: 'cerebras_model', defaultModel: 'llama3.1-70b' },
   { id: 'openrouter', label: 'OpenRouter', keyField: 'openrouter_api_key', modelField: 'openrouter_model', defaultModel: 'meta-llama/llama-3.3-70b-instruct:free' },

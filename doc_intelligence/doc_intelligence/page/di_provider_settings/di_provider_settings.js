@@ -47,7 +47,7 @@ frappe.pages["di-provider-settings"].on_page_load = function(wrapper) {
 
 const di_ps = {
     P: [
-        {id:"groq", name:"Groq", dot:"#7C3FE4", free:true, stat:"30 RPM · 14,400 req/day · 131K ctx", hint:"gsk_...", docs:"https://console.groq.com", kf:"groq_api_key", mf:"groq_model", models:["llama-3.3-70b-versatile","llama-3.1-8b-instant","mixtral-8x7b-32768"]},
+        {id:"groq", name:"Groq", dot:"#7C3FE4", free:true, stat:"30 RPM · 14,400 req/day · 131K ctx", hint:"gsk_...", docs:"https://console.groq.com", kf:"groq_api_key", mf:"groq_model", models:["openai/gpt-oss-120b","openai/gpt-oss-20b","qwen/qwen3.8-27b"]},
         {id:"gemini", name:"Google Gemini", dot:"#1D9E75", free:true, stat:"1,500 req/day · 1M token context", hint:"AIza...", docs:"https://aistudio.google.com", kf:"gemini_api_key", mf:"gemini_model", models:["gemini-2.5-flash","gemini-2.0-flash","gemini-1.5-flash"]},
         {id:"cerebras", name:"Cerebras", dot:"#EF9F27", free:true, stat:"1M tokens/day · no credit card", hint:"csk-...", docs:"https://cloud.cerebras.ai", kf:"cerebras_api_key", mf:"cerebras_model", models:["llama3.1-70b","llama3.1-8b"]},
         {id:"openrouter", name:"OpenRouter", dot:"#D85A30", free:true, stat:"20+ free models · single key", hint:"sk-or-...", docs:"https://openrouter.ai", kf:"openrouter_api_key", mf:"openrouter_model", models:[]},
