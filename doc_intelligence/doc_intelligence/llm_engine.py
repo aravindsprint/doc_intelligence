@@ -72,6 +72,48 @@ def _err_msg(e):
     return msg[:400]
 
 
+
+def _http_openai_compat(provider, key, path, payload=None, timeout=90, extra_headers=None, retries=1):
+    """Call an OpenAI-compatible REST endpoint with plain `requests`.
+
+    Deliberately avoids the `openai` SDK: its HTTP stack (httpx / httpx2)
+    has broken on real benches after unrelated `pip` upgrades, surfacing
+    only as "Connection error." or "process() takes no keyword arguments".
+    `requests` ships with Frappe, so this path always works."""
+    import requests
+    url = provider["base_url"].rstrip("/") + path
+    headers = {"Authorization": f"Bearer {key}", "Content-Type": "application/json"}
+    headers.update(extra_headers or {})
+    last = None
+    for attempt in range(retries + 1):
+        try:
+            if payload is None:
+                r = requests.get(url, headers=headers, timeout=timeout)
+            else:
+                r = requests.post(url, headers=headers, json=payload, timeout=timeout)
+        except requests.exceptions.RequestException as e:
+            last = _ProviderError(f"Network error reaching {provider['id']}: {_err_msg(e)}")
+            continue
+        if r.status_code == 200:
+            return r.json()
+        body = (r.text or "")[:300]
+        if r.status_code in (429, 502, 503):
+            last = _RateLimitError(f"HTTP {r.status_code}: {body}")
+            if attempt < retries:
+                time.sleep(2)
+                continue
+            raise last
+        if r.status_code in (401, 403):
+            raise _ProviderError(f"HTTP {r.status_code} - API key rejected by {provider['id']}: {body}")
+        raise _ProviderError(f"HTTP {r.status_code}: {body}")
+    raise last
+
+
+def _extra_headers(provider):
+    if provider["id"] == "openrouter":
+        return {"HTTP-Referer": "https://github.com/aravindsprint/doc_intelligence", "X-Title": "Doc Intelligence"}
+    return {}
+
 # Model names containing these tokens aren't chat/text models (audio
 # transcription, TTS, moderation, prompt-guard, embeddings) so they're
 # filtered out of the dropdown — selecting one would break extraction.
@@ -98,10 +140,8 @@ def list_provider_models(provider_id):
 
     try:
         if provider["openai_compat"]:
-            from openai import OpenAI
-            client = OpenAI(api_key=key, base_url=provider["base_url"], timeout=20.0, max_retries=0)
-            resp = client.models.list()
-            ids = [m.id for m in resp.data]
+            data = _http_openai_compat(provider, key, "/models", timeout=20, extra_headers=_extra_headers(provider), retries=0)
+            ids = [m.get("id") for m in (data.get("data") or []) if m.get("id")]
         else:
             import anthropic
             client = anthropic.Anthropic(api_key=key, timeout=20.0, max_retries=0)
@@ -147,29 +187,20 @@ def _log_provider_call(provider_id, success, tokens, error=None):
 
 
 def _call_openai_compat(provider, prompt, system, max_tokens, settings):
-    from openai import OpenAI, RateLimitError, APIStatusError
     key = _clean_key(provider.get("_override_key") or provider.get("_key")) or _get_key(settings, provider["key_field"])
     model = getattr(settings, provider["model_field"], None) or provider["default_model"]
-    extra_headers = {}
-    if provider["id"] == "openrouter":
-        extra_headers = {"HTTP-Referer": "https://github.com/aravindsprint/doc_intelligence", "X-Title": "Doc Intelligence"}
     try:
-        client = OpenAI(api_key=key, base_url=provider["base_url"], default_headers=extra_headers, timeout=90.0, max_retries=1)
-        resp = client.chat.completions.create(
-            model=model,
-            messages=[{"role": "system", "content": system}, {"role": "user", "content": prompt}],
-            max_tokens=max_tokens,
-        )
-        text = resp.choices[0].message.content
-        tokens_in = getattr(resp.usage, "prompt_tokens", 0)
-        tokens_out = getattr(resp.usage, "completion_tokens", 0)
-        return {"text": text, "provider": provider["id"], "model": model, "tokens_in": tokens_in, "tokens_out": tokens_out}
-    except RateLimitError as e:
-        raise _RateLimitError(_err_msg(e))
-    except APIStatusError as e:
-        if e.status_code in (429, 502, 503):
-            raise _RateLimitError(_err_msg(e))
-        raise _ProviderError(_err_msg(e))
+        data = _http_openai_compat(provider, key, "/chat/completions", {
+            "model": model,
+            "messages": [{"role": "system", "content": system}, {"role": "user", "content": prompt}],
+            "max_tokens": max_tokens,
+        }, timeout=90, extra_headers=_extra_headers(provider))
+        text = data["choices"][0]["message"]["content"]
+        usage = data.get("usage") or {}
+        return {"text": text, "provider": provider["id"], "model": model,
+                "tokens_in": usage.get("prompt_tokens", 0), "tokens_out": usage.get("completion_tokens", 0)}
+    except (_RateLimitError, _ProviderError):
+        raise
     except Exception as e:
         raise _ProviderError(_err_msg(e))
 
@@ -343,35 +374,25 @@ def _mime_for(path):
 
 def _vision_call_openai_compat(provider, image_b64, mime, max_tokens, settings):
     """Gemini / OpenRouter vision via OpenAI-compatible image_url content."""
-    from openai import OpenAI, RateLimitError, APIStatusError
     key = _clean_key(provider.get("_override_key") or provider.get("_key")) or _get_key(settings, provider["key_field"])
     model = getattr(settings, provider["model_field"], None) or provider["default_model"]
-    extra_headers = {}
-    if provider["id"] == "openrouter":
-        extra_headers = {"HTTP-Referer": "https://github.com/aravindsprint/doc_intelligence", "X-Title": "Doc Intelligence"}
     try:
-        client = OpenAI(api_key=key, base_url=provider["base_url"], default_headers=extra_headers, timeout=90.0, max_retries=1)
-        resp = client.chat.completions.create(
-            model=model,
-            messages=[
+        data = _http_openai_compat(provider, key, "/chat/completions", {
+            "model": model,
+            "messages": [
                 {"role": "system", "content": _VISION_SYSTEM},
                 {"role": "user", "content": [
                     {"type": "text", "text": _VISION_PROMPT},
                     {"type": "image_url", "image_url": {"url": f"data:{mime};base64,{image_b64}"}},
                 ]},
             ],
-            max_tokens=max_tokens,
-        )
-        text = resp.choices[0].message.content
-        return {"text": text, "provider": provider["id"], "model": model,
-                "tokens_in": getattr(resp.usage, "prompt_tokens", 0),
-                "tokens_out": getattr(resp.usage, "completion_tokens", 0)}
-    except RateLimitError as e:
-        raise _RateLimitError(_err_msg(e))
-    except APIStatusError as e:
-        if e.status_code in (429, 502, 503):
-            raise _RateLimitError(_err_msg(e))
-        raise _ProviderError(_err_msg(e))
+            "max_tokens": max_tokens,
+        }, timeout=90, extra_headers=_extra_headers(provider))
+        usage = data.get("usage") or {}
+        return {"text": data["choices"][0]["message"]["content"], "provider": provider["id"], "model": model,
+                "tokens_in": usage.get("prompt_tokens", 0), "tokens_out": usage.get("completion_tokens", 0)}
+    except (_RateLimitError, _ProviderError):
+        raise
     except Exception as e:
         raise _ProviderError(_err_msg(e))
 
