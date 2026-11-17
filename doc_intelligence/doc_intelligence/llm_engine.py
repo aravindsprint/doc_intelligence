@@ -36,6 +36,42 @@ def _get_settings():
     return frappe.get_single("Doc Intelligence Settings")
 
 
+def _clean_key(key):
+    """Strip whitespace/newlines and invisible characters from a pasted API
+    key. A trailing space or newline (very common when copying a key from a
+    provider console) makes httpx reject the Authorization header *before*
+    any network call, and the OpenAI SDK reports that only as a generic
+    "Connection error." — which looks like a network problem but isn't."""
+    if not key:
+        return key
+    return "".join(ch for ch in str(key) if ch.isprintable() and not ch.isspace() and ord(ch) < 128)
+
+
+def _get_key(settings, field):
+    try:
+        return _clean_key(settings.get_password(field, raise_exception=False))
+    except Exception:
+        return None
+
+
+def _err_msg(e):
+    """str(e) plus the underlying cause. openai.APIConnectionError's message
+    is always just "Connection error." — the real reason (DNS failure, SSL,
+    timeout, proxy, illegal header) lives in __cause__."""
+    msg = str(e).strip()
+    cause = e.__cause__
+    seen = 0
+    while cause is not None and seen < 3:
+        c = str(cause).strip()
+        if c and c not in msg:
+            msg = f"{msg} ({type(cause).__name__}: {c})"
+        cause = cause.__cause__
+        seen += 1
+    # never echo the API key back to the UI / logs
+    msg = re.sub(r"(Bearer\s*)[^'\s\"]+", r"\1***", msg)
+    return msg[:400]
+
+
 # Model names containing these tokens aren't chat/text models (audio
 # transcription, TTS, moderation, prompt-guard, embeddings) so they're
 # filtered out of the dropdown — selecting one would break extraction.
@@ -51,7 +87,7 @@ def list_provider_models(provider_id):
     if not provider:
         frappe.throw(f"Unknown provider: {provider_id}")
 
-    key = settings.get_password(provider["key_field"])
+    key = _get_key(settings, provider["key_field"])
     if not key:
         return {"models": [], "error": "Add an API key for this provider first, then save, then refresh models."}
 
@@ -72,7 +108,7 @@ def list_provider_models(provider_id):
             resp = client.models.list()
             ids = [m.id for m in resp.data]
     except Exception as e:
-        return {"models": [], "error": str(e)[:200]}
+        return {"models": [], "error": _err_msg(e)}
 
     ids = sorted({m for m in ids if not any(k in m.lower() for k in _NON_CHAT_MODEL_KEYWORDS)})
     frappe.cache().set_value(cache_key, json.dumps(ids), expires_in_sec=3600)
@@ -89,7 +125,7 @@ def _get_provider_config(settings, tenant_name=None):
         p = next((x for x in PROVIDERS if x["id"] == pid), None)
         if not p:
             continue
-        key = settings.get_password(p["key_field"]) if getattr(settings, p["key_field"], None) else None
+        key = _get_key(settings, p["key_field"]) if getattr(settings, p["key_field"], None) else None
         if key:
             ordered.append({**p, "_key": key})
     return ordered
@@ -112,7 +148,7 @@ def _log_provider_call(provider_id, success, tokens, error=None):
 
 def _call_openai_compat(provider, prompt, system, max_tokens, settings):
     from openai import OpenAI, RateLimitError, APIStatusError
-    key = provider.get("_override_key") or provider.get("_key") or settings.get_password(provider["key_field"])
+    key = _clean_key(provider.get("_override_key") or provider.get("_key")) or _get_key(settings, provider["key_field"])
     model = getattr(settings, provider["model_field"], None) or provider["default_model"]
     extra_headers = {}
     if provider["id"] == "openrouter":
@@ -129,18 +165,18 @@ def _call_openai_compat(provider, prompt, system, max_tokens, settings):
         tokens_out = getattr(resp.usage, "completion_tokens", 0)
         return {"text": text, "provider": provider["id"], "model": model, "tokens_in": tokens_in, "tokens_out": tokens_out}
     except RateLimitError as e:
-        raise _RateLimitError(str(e))
+        raise _RateLimitError(_err_msg(e))
     except APIStatusError as e:
         if e.status_code in (429, 502, 503):
-            raise _RateLimitError(str(e))
-        raise _ProviderError(str(e))
+            raise _RateLimitError(_err_msg(e))
+        raise _ProviderError(_err_msg(e))
     except Exception as e:
-        raise _ProviderError(str(e))
+        raise _ProviderError(_err_msg(e))
 
 
 def _call_claude(provider, prompt, system, max_tokens, settings):
     import anthropic
-    key = provider.get("_override_key") or provider.get("_key") or settings.get_password(provider["key_field"])
+    key = _clean_key(provider.get("_override_key") or provider.get("_key")) or _get_key(settings, provider["key_field"])
     model = getattr(settings, provider["model_field"], None) or provider["default_model"]
     try:
         client = anthropic.Anthropic(api_key=key, timeout=90.0, max_retries=1)
@@ -155,9 +191,9 @@ def _call_claude(provider, prompt, system, max_tokens, settings):
         tokens_out = resp.usage.output_tokens
         return {"text": text, "provider": "claude", "model": model, "tokens_in": tokens_in, "tokens_out": tokens_out}
     except anthropic.RateLimitError as e:
-        raise _RateLimitError(str(e))
+        raise _RateLimitError(_err_msg(e))
     except Exception as e:
-        raise _ProviderError(str(e))
+        raise _ProviderError(_err_msg(e))
 
 
 def llm_call(prompt, system="You are a helpful AI assistant.", max_tokens=2000, tenant_name=None, json_mode=False):
@@ -308,7 +344,7 @@ def _mime_for(path):
 def _vision_call_openai_compat(provider, image_b64, mime, max_tokens, settings):
     """Gemini / OpenRouter vision via OpenAI-compatible image_url content."""
     from openai import OpenAI, RateLimitError, APIStatusError
-    key = provider.get("_override_key") or provider.get("_key") or settings.get_password(provider["key_field"])
+    key = _clean_key(provider.get("_override_key") or provider.get("_key")) or _get_key(settings, provider["key_field"])
     model = getattr(settings, provider["model_field"], None) or provider["default_model"]
     extra_headers = {}
     if provider["id"] == "openrouter":
@@ -331,18 +367,18 @@ def _vision_call_openai_compat(provider, image_b64, mime, max_tokens, settings):
                 "tokens_in": getattr(resp.usage, "prompt_tokens", 0),
                 "tokens_out": getattr(resp.usage, "completion_tokens", 0)}
     except RateLimitError as e:
-        raise _RateLimitError(str(e))
+        raise _RateLimitError(_err_msg(e))
     except APIStatusError as e:
         if e.status_code in (429, 502, 503):
-            raise _RateLimitError(str(e))
-        raise _ProviderError(str(e))
+            raise _RateLimitError(_err_msg(e))
+        raise _ProviderError(_err_msg(e))
     except Exception as e:
-        raise _ProviderError(str(e))
+        raise _ProviderError(_err_msg(e))
 
 
 def _vision_call_claude(provider, image_b64, mime, max_tokens, settings):
     import anthropic
-    key = provider.get("_override_key") or provider.get("_key") or settings.get_password(provider["key_field"])
+    key = _clean_key(provider.get("_override_key") or provider.get("_key")) or _get_key(settings, provider["key_field"])
     model = getattr(settings, provider["model_field"], None) or provider["default_model"]
     try:
         client = anthropic.Anthropic(api_key=key, timeout=90.0, max_retries=1)
@@ -359,9 +395,9 @@ def _vision_call_claude(provider, image_b64, mime, max_tokens, settings):
         return {"text": text, "provider": "claude", "model": model,
                 "tokens_in": resp.usage.input_tokens, "tokens_out": resp.usage.output_tokens}
     except anthropic.RateLimitError as e:
-        raise _RateLimitError(str(e))
+        raise _RateLimitError(_err_msg(e))
     except Exception as e:
-        raise _ProviderError(str(e))
+        raise _ProviderError(_err_msg(e))
 
 
 def vision_extract_text(image_path, tenant_name=None, max_tokens=4000):
@@ -418,7 +454,7 @@ def vision_extract_text(image_path, tenant_name=None, max_tokens=4000):
 def _vision_call_gemini_native(provider, image_b64, mime, max_tokens, settings):
     """Gemini vision via native generateContent endpoint (works with AQ.* keys)."""
     import requests
-    key = provider.get("_override_key") or provider.get("_key") or settings.get_password(provider["key_field"])
+    key = _clean_key(provider.get("_override_key") or provider.get("_key")) or _get_key(settings, provider["key_field"])
     model = getattr(settings, provider["model_field"], None) or provider["default_model"]
     model = model.replace("models/", "")
     url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
@@ -448,5 +484,5 @@ def _vision_call_gemini_native(provider, image_b64, mime, max_tokens, settings):
     except (_RateLimitError, _ProviderError):
         raise
     except Exception as e:
-        raise _ProviderError(str(e))
+        raise _ProviderError(_err_msg(e))
 

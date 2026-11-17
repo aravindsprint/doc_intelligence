@@ -171,6 +171,9 @@ def save_provider_settings(settings):
     for field, value in settings.items():
         if field in key_fields and value == "xxxxxx":
             continue
+        if field in key_fields and value:
+            from doc_intelligence.doc_intelligence.llm_engine import _clean_key
+            value = _clean_key(value)
         if hasattr(doc, field):
             setattr(doc, field, value)
     doc.save(ignore_permissions=True)
@@ -189,7 +192,7 @@ def get_provider_models(provider):
 def test_providers():
     if "System Manager" not in frappe.get_roles():
         frappe.throw("Only System Manager can test providers.", frappe.PermissionError)
-    from doc_intelligence.doc_intelligence.llm_engine import PROVIDERS, _get_settings, _call_openai_compat, _call_claude, _RateLimitError, _ProviderError
+    from doc_intelligence.doc_intelligence.llm_engine import PROVIDERS, _get_settings, _call_openai_compat, _call_claude, _RateLimitError, _ProviderError, _err_msg
     settings = _get_settings()
     results = []
     for p in PROVIDERS:
@@ -201,7 +204,7 @@ def test_providers():
             resp = _call_openai_compat(p, "Reply with single word: ok", "You are a test.", 10, settings) if p["openai_compat"] else _call_claude(p, "Reply with single word: ok", "You are a test.", 10, settings)
             results.append({"provider": p["id"], "status": "pass", "response": resp.get("text", "")[:50]})
         except Exception as e:
-            results.append({"provider": p["id"], "status": "fail", "message": str(e)})
+            results.append({"provider": p["id"], "status": "fail", "message": _err_msg(e)})
     return results
 
 
