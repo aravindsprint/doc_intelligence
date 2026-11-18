@@ -201,8 +201,15 @@ def test_providers():
             results.append({"provider": p["id"], "status": "skipped", "message": "No API key"})
             continue
         try:
-            resp = _call_openai_compat(p, "Reply with single word: ok", "You are a test.", 10, settings) if p["openai_compat"] else _call_claude(p, "Reply with single word: ok", "You are a test.", 10, settings)
-            results.append({"provider": p["id"], "status": "pass", "response": resp.get("text", "")[:50]})
+            # 256 tokens: thinking models spend tokens before answering;
+            # 30s / no retry so one slow provider can't hang the whole test
+            if p["openai_compat"]:
+                resp = _call_openai_compat(p, "Reply with single word: ok", "You are a test.", 256, settings, timeout=30, retries=0)
+            else:
+                resp = _call_claude(p, "Reply with single word: ok", "You are a test.", 256, settings)
+            text = (resp.get("text") or "").strip()
+            results.append({"provider": p["id"], "status": "pass",
+                            "response": (text[:50] or "(connected - empty reply)") + f" [{resp.get('model','')}]"})
         except Exception as e:
             results.append({"provider": p["id"], "status": "fail", "message": _err_msg(e)})
     return results

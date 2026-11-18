@@ -14,9 +14,9 @@ def _strip_json_fences(text):
 
 PROVIDERS = [
     {"id": "groq",       "base_url": "https://api.groq.com/openai/v1",                          "default_model": "openai/gpt-oss-120b",                       "key_field": "groq_api_key",       "model_field": "groq_model",       "openai_compat": True},
-    {"id": "gemini",     "base_url": "https://generativelanguage.googleapis.com/v1beta/openai",  "default_model": "gemini-2.0-flash",                          "key_field": "gemini_api_key",     "model_field": "gemini_model",     "openai_compat": True},
+    {"id": "gemini",     "base_url": "https://generativelanguage.googleapis.com/v1beta/openai",  "default_model": "gemini-flash-latest",                        "key_field": "gemini_api_key",     "model_field": "gemini_model",     "openai_compat": True},
     {"id": "cerebras",   "base_url": "https://api.cerebras.ai/v1",                               "default_model": "llama3.1-70b",                              "key_field": "cerebras_api_key",   "model_field": "cerebras_model",   "openai_compat": True},
-    {"id": "openrouter", "base_url": "https://openrouter.ai/api/v1",                             "default_model": "meta-llama/llama-3.3-70b-instruct:free",    "key_field": "openrouter_api_key", "model_field": "openrouter_model", "openai_compat": True},
+    {"id": "openrouter", "base_url": "https://openrouter.ai/api/v1",                             "default_model": "openrouter/free",                           "key_field": "openrouter_api_key", "model_field": "openrouter_model", "openai_compat": True},
     {"id": "mistral",    "base_url": "https://api.mistral.ai/v1",                                "default_model": "mistral-small-latest",                      "key_field": "mistral_api_key",    "model_field": "mistral_model",    "openai_compat": True},
     {"id": "deepseek",   "base_url": "https://api.deepseek.com/v1",                          "default_model": "deepseek-chat",                             "key_field": "deepseek_api_key",   "model_field": "deepseek_model",   "openai_compat": True},
     {"id": "claude",     "base_url": None,                                                        "default_model": "claude-haiku-4-5-20251001",                 "key_field": "claude_api_key",     "model_field": "claude_model",     "openai_compat": False},
@@ -186,18 +186,35 @@ def _log_provider_call(provider_id, success, tokens, error=None):
         pass
 
 
-def _call_openai_compat(provider, prompt, system, max_tokens, settings):
+def _call_openai_compat(provider, prompt, system, max_tokens, settings, timeout=90, retries=1):
     key = _clean_key(provider.get("_override_key") or provider.get("_key")) or _get_key(settings, provider["key_field"])
     model = getattr(settings, provider["model_field"], None) or provider["default_model"]
+    payload = {
+        "model": model,
+        "messages": [{"role": "system", "content": system}, {"role": "user", "content": prompt}],
+        "max_tokens": max_tokens,
+    }
+    # Newer Gemini models "think" by default, which can take minutes and
+    # burn the whole token budget before any answer. Keep thinking low.
+    if provider["id"] == "gemini":
+        payload["reasoning_effort"] = "low"
     try:
-        data = _http_openai_compat(provider, key, "/chat/completions", {
-            "model": model,
-            "messages": [{"role": "system", "content": system}, {"role": "user", "content": prompt}],
-            "max_tokens": max_tokens,
-        }, timeout=90, extra_headers=_extra_headers(provider))
-        text = data["choices"][0]["message"]["content"]
+        try:
+            data = _http_openai_compat(provider, key, "/chat/completions", payload,
+                                       timeout=timeout, extra_headers=_extra_headers(provider), retries=retries)
+        except _ProviderError as e:
+            # model that doesn't support reasoning_effort -> retry without it
+            if "reasoning_effort" in payload and "HTTP 400" in str(e):
+                payload.pop("reasoning_effort")
+                data = _http_openai_compat(provider, key, "/chat/completions", payload,
+                                           timeout=timeout, extra_headers=_extra_headers(provider), retries=retries)
+            else:
+                raise
+        msg = (data.get("choices") or [{}])[0].get("message") or {}
+        # reasoning models (e.g. via openrouter/free) can return content=None
+        text = msg.get("content") or ""
         usage = data.get("usage") or {}
-        return {"text": text, "provider": provider["id"], "model": model,
+        return {"text": text, "provider": provider["id"], "model": data.get("model") or model,
                 "tokens_in": usage.get("prompt_tokens", 0), "tokens_out": usage.get("completion_tokens", 0)}
     except (_RateLimitError, _ProviderError):
         raise
