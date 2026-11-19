@@ -103,8 +103,53 @@
           </div>
         </template>
 
+        <!-- Entity, many records found: review table -->
+        <template v-if="mode === 'entity-bulk'">
+          <div class="di-notice">
+            Found {{ bulkRows.length }} {{ target }} records in this document. Untick any you don't want, then create them together.
+          </div>
+          <div v-if="bulkExistingCount" class="di-risk-banner risk-high">
+            <div class="di-risk-detail">
+              {{ bulkExistingCount }} look like they already exist in ERPNext and have been unticked — tick them again if they're really new.
+            </div>
+          </div>
+
+          <div v-if="bulkLinkColumns.length" class="di-bulk-fill">
+            <div v-for="col in bulkLinkColumns" :key="col" class="di-bulk-fill-row">
+              <label class="di-label">{{ prettyLabel(col) }} for all ticked rows</label>
+              <div class="di-bulk-fill-ctrl">
+                <LinkField v-model="bulkFill[col]" :doctype="linkDoctypeFor(col)" :placeholder="`Search ${linkDoctypeFor(col)}`" />
+                <button class="di-btn secondary" :disabled="!bulkFill[col]" @click="applyBulkFill(col)">Apply</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="di-bulk-wrap">
+            <table class="di-item-table">
+              <thead>
+                <tr>
+                  <th><input type="checkbox" :checked="allSelected" @change="toggleAll($event.target.checked)" /></th>
+                  <th v-for="col in bulkColumns" :key="col">{{ prettyLabel(col) }}</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="(row, i) in bulkRows" :key="i" :class="{ 'di-row-off': !row.selected }">
+                  <td><input type="checkbox" v-model="row.selected" /></td>
+                  <td v-for="col in bulkColumns" :key="col"><input v-model="row.values[col]" class="di-input" /></td>
+                  <td class="di-row-flag">
+                    <span v-if="row.matched" class="di-flag" :title="`Similar to existing ${row.matched}`">exists</span>
+                    <span v-else-if="row.match_multiple" class="di-flag" title="Several similar records exist">similar</span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="di-hint">Other fields the AI found (description, HSN, etc.) are created too — open each record afterwards to fine-tune.</p>
+        </template>
+
         <!-- Entity: generic key/value form -->
-        <template v-if="mode === 'entity'">
+        <template v-else-if="mode === 'entity'">
           <div v-if="entityMultipleMatches" class="di-risk-banner risk-high">
             <strong>⚠ Multiple similar {{ target }} records found</strong>
             <div class="di-risk-detail">
@@ -133,7 +178,7 @@
         </template>
 
         <!-- Transaction / Purchase Invoice: header + items -->
-        <template v-else>
+        <template v-else-if="mode === 'pi' || mode === 'txn'">
           <div class="di-form-grid">
             <div v-if="mode === 'pi'">
               <label class="di-label">Supplier {{ header.matched_supplier ? '(matched)' : '(will create if new)' }}</label>
@@ -195,9 +240,30 @@
 
         <div class="di-modal-actions">
           <button class="di-btn secondary" @click="step = 1">Back</button>
-          <button class="di-btn primary" :disabled="creating || ((mode === 'pi' || mode === 'txn') && ((mode === 'pi' ? piDuplicate : txnDuplicate) && !confirmDuplicate))" @click="createRecord">
+          <button v-if="mode === 'entity-bulk'" class="di-btn primary" :disabled="creating || !selectedCount" @click="createBulk">
+            {{ creating ? 'Creating…' : `Create ${selectedCount} ${target}${selectedCount === 1 ? '' : 's'}` }}
+          </button>
+          <button v-else class="di-btn primary" :disabled="creating || ((mode === 'pi' || mode === 'txn') && ((mode === 'pi' ? piDuplicate : txnDuplicate) && !confirmDuplicate))" @click="createRecord">
             {{ creating ? 'Creating…' : 'Create' }}
           </button>
+        </div>
+      </template>
+
+      <!-- Step 3: done (bulk) -->
+      <template v-else-if="bulkResult">
+        <div class="di-success">
+          <div class="di-success-icon">✓</div>
+          <div>Created <strong>{{ bulkResult.created.length }}</strong> {{ bulkResult.doctype }} record{{ bulkResult.created.length === 1 ? '' : 's' }}</div>
+        </div>
+        <div v-if="bulkResult.failed.length" class="di-risk-banner risk-high">
+          <strong>{{ bulkResult.failed.length }} could not be created</strong>
+          <ul class="di-fail-list">
+            <li v-for="(f, i) in bulkResult.failed" :key="i"><strong>{{ f.label }}</strong> — {{ f.error }}</li>
+          </ul>
+        </div>
+        <div class="di-modal-actions">
+          <button v-if="bulkResult.failed.length" class="di-btn secondary" @click="step = 2">Back to list</button>
+          <button class="di-btn secondary" @click="close">Close</button>
         </div>
       </template>
 
@@ -249,6 +315,31 @@ function linkDoctypeFor(key) {
 }
 
 const primaryFieldKey = computed(() => PRIMARY_FIELD_KEY[target.value] || null)
+
+// Columns shown in the multi-record review table (all extracted fields are still sent on create)
+const BULK_COLUMNS = {
+  Item: ['item_name', 'item_group', 'stock_uom', 'standard_rate'],
+  Supplier: ['supplier_name', 'supplier_group', 'tax_id'],
+  Customer: ['customer_name', 'customer_group', 'tax_id'],
+  Employee: ['employee_name', 'designation', 'department'],
+  Address: ['address_title', 'address_line1', 'city'],
+  Contact: ['first_name', 'last_name', 'email_id'],
+  Warehouse: ['warehouse_name', 'city'],
+}
+const bulkRows = ref([])
+const bulkFill = ref({})
+const bulkResult = ref(null)
+const bulkColumns = computed(() => BULK_COLUMNS[target.value] || [])
+const bulkLinkColumns = computed(() =>
+  bulkColumns.value.filter(c => c !== primaryFieldKey.value && LINK_FIELD_MAP[target.value]?.[c]))
+const selectedCount = computed(() => bulkRows.value.filter(r => r.selected).length)
+const allSelected = computed(() => bulkRows.value.length > 0 && selectedCount.value === bulkRows.value.length)
+const bulkExistingCount = computed(() => bulkRows.value.filter(r => r.matched).length)
+
+function toggleAll(on) { bulkRows.value.forEach(r => { r.selected = on }) }
+function applyBulkFill(col) {
+  bulkRows.value.forEach(r => { if (r.selected) r.values[col] = bulkFill.value[col] })
+}
 
 const step = ref(1)
 const target = ref('Item')
@@ -322,6 +413,20 @@ async function extract() {
     } else if (entityTypes.includes(target.value)) {
       mode.value = 'entity'
       const res = await api.extractEntity(props.docName, target.value)
+      bulkResult.value = null
+      if ((res.records || []).length > 1) {
+        mode.value = 'entity-bulk'
+        bulkFill.value = {}
+        bulkRows.value = res.records.map(r => ({
+          values: { ...(r.values || {}) },
+          matched: r.matched || null,
+          match_multiple: !!r.match_multiple,
+          // Pre-untick rows that already exist so re-running doesn't make duplicates
+          selected: !r.matched,
+        }))
+        step.value = 2
+        return
+      }
       fields.value = res.extracted || {}
       entityMatched.value = res.matched || null
       entityMatchConfidence.value = res.match_confidence ?? null
@@ -352,6 +457,25 @@ async function extract() {
     error.value = err.message
   } finally {
     extracting.value = false
+  }
+}
+
+async function createBulk() {
+  creating.value = true
+  error.value = ''
+  try {
+    const picked = bulkRows.value.filter(r => r.selected)
+    const res = await api.createEntitiesBulk(target.value, picked.map(r => r.values))
+    // Drop the rows that were created so "Back to list" shows only what's left to fix
+    const done = new Set(res.created.map(c => picked[c.index]))
+    bulkRows.value = bulkRows.value.filter(r => !done.has(r))
+    bulkResult.value = res
+    step.value = 3
+    if (res.created.length) emit('created', { doctype: res.doctype, name: res.created[0].name, bulk: res })
+  } catch (err) {
+    error.value = err.message
+  } finally {
+    creating.value = false
   }
 }
 
@@ -393,6 +517,7 @@ async function createRecord() {
       )
     }
     created.value = res
+    bulkResult.value = null
     step.value = 3
     emit('created', res)
   } catch (err) {
@@ -431,6 +556,16 @@ async function createRecord() {
 .di-item-table { width: 100%; border-collapse: collapse; margin-top: 8px; }
 .di-item-table th { text-align: left; font-size: 11px; color: var(--di-muted); padding: 4px 6px; }
 .di-item-table td { padding: 4px 6px; }
+.di-bulk-wrap { max-height: 360px; overflow: auto; border: 1px solid #e2e8f0; border-radius: 8px; }
+.di-bulk-wrap thead th { position: sticky; top: 0; background: #fff; z-index: 1; }
+.di-row-off td { opacity: .5; }
+.di-row-flag { white-space: nowrap; }
+.di-flag { font-size: 11px; background: #fef3c7; color: #92400e; border-radius: 4px; padding: 2px 6px; }
+.di-bulk-fill { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+.di-bulk-fill-ctrl { display: flex; gap: 6px; align-items: flex-start; }
+.di-bulk-fill-ctrl > :first-child { flex: 1; }
+.di-fail-list { margin: 6px 0 0; padding-left: 18px; font-weight: 400; }
+.di-modal-wide { max-width: 760px; }
 .di-success { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 24px 0; text-align: center; }
 .di-success-icon {
   width: 40px; height: 40px; border-radius: 50%; background: #dcfce7; color: #166534;

@@ -527,10 +527,16 @@ def extract_entity(doc_name, entity_type):
     schema = _ENTITY_SCHEMAS[entity_type]
     schema_json = json.dumps(schema, indent=2)
 
-    prompt = f"""You are an ERPNext expert. From the document text below, extract the fields to create a new {entity_type} record.
+    prompt = f"""You are an ERPNext expert. From the document text below, extract every distinct {entity_type} record the document contains.
+A document may describe one {entity_type} or many (e.g. a list or table of items) — return one entry per distinct record, in document order. Do not merge records and do not invent records that are not in the document.
 
-Return ONLY a valid JSON object with these exact keys (use null when a value is not present in the document):
+Return ONLY a valid JSON object of this shape:
+{{"records": [ {{...one record...}}, ... ]}}
+
+Each record must have these exact keys (use null when a value is not present in the document):
 {schema_json}
+
+Keep descriptions short (one line). If the document has only one {entity_type}, return a list with one record.
 
 Document text:
 ---
@@ -540,42 +546,68 @@ Document text:
 Return only the JSON object, no explanation, no markdown."""
 
     settings = frappe.get_single("Doc Intelligence Settings")
+    # Multi-record output needs more room than a single record; long lists
+    # truncated mid-JSON would otherwise fail to parse.
     result = llm_call(
         prompt,
         f"You are a precise {entity_type} data extractor. Return only valid JSON.",
-        settings.max_tokens_per_request or 2000,
+        max(cint(settings.max_tokens_per_request) or 2000, 4000),
     )
 
     text = result.get("text", "")
     text = re.sub(r"```json\s*|\s*```", "", text).strip()
     try:
-        extracted = json.loads(text)
+        parsed = json.loads(text)
     except Exception:
         frappe.throw(f"AI could not parse {entity_type} data. Raw response: {text[:500]}")
 
-    # Fuzzy-match against existing records so the user is warned about duplicates
-    matched = None
-    match_confidence = 0
-    match_multiple = False
+    records = _normalize_entity_records(parsed)
+    if not records:
+        frappe.throw(f"AI did not find any {entity_type} data in this document.")
+
+    # Fuzzy-match each record against existing ones so the user is warned about duplicates
+    match_fn = None
     if entity_type in _ENTITY_MATCH:
         from doc_intelligence.doc_intelligence.validation import intelligent_entity_match
         target_dt, match_field = _ENTITY_MATCH[entity_type]
-        val = (extracted.get(match_field) or "").strip()
-        if val:
-            match_result = intelligent_entity_match(target_dt, match_field, val)
-            matched = match_result["match"]
-            match_confidence = match_result["confidence"]
-            match_multiple = match_result["multiple_matches"]
+        match_fn = lambda v: intelligent_entity_match(target_dt, match_field, v)
 
+    matches = []
+    for rec in records:
+        m = {"matched": None, "match_confidence": 0, "match_multiple": False}
+        if match_fn:
+            val = str(rec.get(_ENTITY_MATCH[entity_type][1]) or "").strip()
+            if val:
+                r = match_fn(val)
+                m = {"matched": r["match"], "match_confidence": r["confidence"],
+                     "match_multiple": r["multiple_matches"]}
+        matches.append(m)
+
+    first = matches[0]
     return {
         "entity_type": entity_type,
-        "extracted": extracted,
-        "matched": matched,
-        "match_confidence": match_confidence,
-        "match_multiple": match_multiple,
+        # Single-record keys kept for the desk form (ai_document.js) and older clients
+        "extracted": records[0],
+        "matched": first["matched"],
+        "match_confidence": first["match_confidence"],
+        "match_multiple": first["match_multiple"],
+        # Multi-record payload: one entry per record found in the document
+        "records": [{"values": rec, **m} for rec, m in zip(records, matches)],
         "doc_name": doc_name,
         "ai_provider": result.get("provider", ""),
     }
+
+
+def _normalize_entity_records(parsed):
+    """Accept {"records": [...]}, a bare list, or a single object; return a list of dicts."""
+    if isinstance(parsed, dict):
+        if isinstance(parsed.get("records"), list):
+            parsed = parsed["records"]
+        else:
+            parsed = [parsed]
+    if not isinstance(parsed, list):
+        return []
+    return [r for r in parsed if isinstance(r, dict) and any(v not in (None, "", "null") for v in r.values())]
 
 
 @frappe.whitelist()
@@ -584,6 +616,58 @@ def create_entity_doc(entity_type, values):
     if isinstance(values, str):
         values = json.loads(values)
 
+    doc = _build_entity_doc(entity_type, values)
+    doc.insert(ignore_mandatory=True)
+    # Commits immediately after insert() so the newly-created draft record is
+    # durably saved before the API response returns and the frontend navigates
+    # straight to it.
+    frappe.db.commit()  # nosemgrep: frappe-manual-commit
+    return {"name": doc.name, "doctype": entity_type}
+
+
+@frappe.whitelist()
+def create_entities_bulk(entity_type, records):
+    """Insert many records of one entity type. Each record is saved on its own,
+    so one failure (duplicate name, bad link value) doesn't block the rest.
+
+    Returns {"created": [{"index", "name", "label"}], "failed": [{"index", "label", "error"}]};
+    index is the position in the submitted list.
+    """
+    if isinstance(records, str):
+        records = json.loads(records)
+    if not isinstance(records, list) or not records:
+        frappe.throw("No records to create.")
+    if len(records) > 200:
+        frappe.throw("Too many records in one request (max 200).")
+
+    label_key = (_ENTITY_MATCH.get(entity_type) or (None, None))[1]
+    created, failed = [], []
+    for idx, values in enumerate(records):
+        label = (values.get(label_key) if label_key else None) or values.get("first_name") \
+            or values.get("address_title") or "(unnamed)"
+        frappe.db.savepoint("di_bulk_entity")
+        try:
+            doc = _build_entity_doc(entity_type, values)
+            doc.insert(ignore_mandatory=True)
+            # Commit per record so earlier successes survive a later failure.
+            frappe.db.commit()  # nosemgrep: frappe-manual-commit
+            created.append({"index": idx, "name": doc.name, "label": label})
+        except Exception as e:
+            frappe.db.rollback(save_point="di_bulk_entity")
+            frappe.clear_messages()
+            failed.append({"index": idx, "label": label, "error": _short_error(e)})
+
+    return {"doctype": entity_type, "created": created, "failed": failed}
+
+
+def _short_error(e):
+    msg = str(e) or e.__class__.__name__
+    msg = re.sub(r"<[^>]+>", "", msg)
+    return msg[:300]
+
+
+def _build_entity_doc(entity_type, values):
+    """Build (but don't insert) the target doctype from dialog values."""
     if entity_type not in _ENTITY_SCHEMAS:
         frappe.throw(f"Unsupported entity type: {entity_type}")
 
@@ -687,12 +771,7 @@ def create_entity_doc(entity_type, values):
     else:
         frappe.throw(f"Unsupported entity type: {entity_type}")
 
-    doc.insert(ignore_mandatory=True)
-    # Commits immediately after insert() so the newly-created draft record is
-    # durably saved before the API response returns and the frontend navigates
-    # straight to it.
-    frappe.db.commit()  # nosemgrep: frappe-manual-commit
-    return {"name": doc.name, "doctype": entity_type}
+    return doc
 
 
 # ---- small helpers ----
