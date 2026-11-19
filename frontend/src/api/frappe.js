@@ -192,6 +192,8 @@ export const extractEntity = (doc_name, entity_type) =>
   call(`${APP}.extract_entity`, { doc_name, entity_type }).then(r => r.message)
 export const createEntityDoc = (entity_type, values) =>
   call(`${APP}.create_entity_doc`, { entity_type, values }).then(r => r.message)
+export const createEntitiesBulk = (entity_type, records) =>
+  call(`${APP}.create_entities_bulk`, { entity_type, records }).then(r => r.message)
 
 export const extractTransaction = (doc_name, txn_type) =>
   call(`${APP}.extract_transaction`, { doc_name, txn_type }).then(r => r.message)
